@@ -10,9 +10,11 @@ That's all you need to know for now, but I'll put more here later.
 
 Find me online using the links in the footer or see some recent tweets:
 
-{% twitter https://twitter.com/chrismilleruk limit=5 widget_type=grid maxwidth=500 %}
+{% twitter https://twitter.com/chrismilleruk limit=5 maxwidth=500 %}
 
-{% twitter https://twitter.com/TwitterDev/timelines/539487832448843776 limit=5 widget_type=grid maxwidth=500 %}
+{% twitter https://twitter.com/i/lists/1346872430531387395?s=20 limit=5 maxwidth=500 %}
+
+{% twitter https://twitter.com/jekyllrb maxwidth=500 limit=5 %}
 
 btw. this website is powered by **[fastpages](https://github.com/fastai/fastpages)** [^1].
 
