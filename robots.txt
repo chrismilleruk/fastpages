@@ -1,1 +1,1 @@
-Sitemap: https://chrismilleruk.github.io/fastpages/sitemap.xml
+Sitemap: https://chrismiller.uk/sitemap.xml
