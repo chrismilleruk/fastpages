@@ -359,6 +359,7 @@ window.onload = wrap_img;
  </div>
   </li>
   <li>Under <strong>Import IdP metadata</strong>
+   <img src="/images/2021-03-11-ElasticSearch-Import-IdP-metadata.png" alt="" title="Elasticsearch &gt;&gt; Import IdP metadata">
     <ol>
       <li>Upload the <strong>AWS SSO SAML metadata file</strong>
 </li>
@@ -366,7 +367,6 @@ window.onload = wrap_img;
 <strong>IdP entity ID</strong> should be populated automatically from the XML.</li>
       <li>
 <strong>SAML master username / backend role</strong> (optional)
-   <img src="/images/2021-03-11-ElasticSearch-ClusterHealth-Error.png" alt="" title="Without an _IAM Role ARN_ in _SAML Master backend role_, the _Cluster Health_ and _Indices_ tabs won't load properly.">
         <ol>
           <li>Use an IAM Role here to resolve access errors in the AWS console.
             <ol>
@@ -380,13 +380,26 @@ window.onload = wrap_img;
               </li>
             </ol>
           </li>
-          <li>Note that these fields simply update the <em>all_access</em> and <em>security_manager</em> <strong>Role Mappings</strong> in Kibana. The details won’t be reloaded next time you edit this page but can be found in Kibana under Security &gt; Role Mappings.</li>
+          <li>Note that these fields simply update the <em>all_access</em> and <em>security_manager</em> <strong>Role Mappings</strong> in Kibana. The details won’t be reloaded next time you edit this page but can be found in Kibana under Security &gt; Role Mappings. 
+<img src="/images/2021-03-11-ElasticSearch-ClusterHealth-Error.png" alt="" title="Without an _IAM Role ARN_ in _SAML Master backend role_, the _Cluster Health_ and _Indices_ tabs won't load properly.">
+</li>
         </ol>
       </li>
     </ol>
   </li>
   <li>Save</li>
-  <li>Copy the <strong>Kibana</strong> or <strong>Custom Kibana</strong> endpoint from the Overview page -&gt;  AWS SSO / Application start URL</li>
+  <li>Copy the <strong>Kibana</strong> or <strong>Custom Kibana</strong> endpoint from the Overview page -&gt;  AWS SSO / Application start URL
+    <div style="display: flex;">
+<figure class="image" style="flex: 1 1 100px; margin: 1em 10px;">
+  <img src="/images/2021-03-11-ElasticSearch-Overview.png" style="margin-left: 0; max-height: 250px;">
+  <figcaption>Elasticsearch &gt;&gt; Overiew &gt;&gt; _Kibana_ endpoint</figcaption>
+</figure>
+<figure class="image" style="flex: 1 1 100px; margin:1em 0;">
+  <img src="/images/2021-03-11-SSO-ConfigureCustomApp6.png" style="margin-left: 0; max-height: 250px;">
+  <figcaption>AWS SSO &gt;&gt; Application properties &gt;&gt; Application start URL</figcaption>
+</figure>
+</div>
+  </li>
 </ol>
 
 <h3 id="aws-sso---complete-configuration">
