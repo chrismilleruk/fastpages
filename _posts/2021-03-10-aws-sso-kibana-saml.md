@@ -42,6 +42,18 @@ One limitation of this approach is that AWS SSO does not appear to support passi
 
 It's not one of the [AWS SSO supported apps](https://docs.aws.amazon.com/singlesignon/latest/userguide/saasapps.html#saasapps-supported) so we have to go the long way round with a [custom SAML app](https://docs.aws.amazon.com/singlesignon/latest/userguide/samlapps.html).
 
+Launch settings for Elasticsearch:
+
+| Setting name | value | info |
+|-|-|-|
+| Deployment type | Dev & Test | (free tier eligible) |
+| Version | 6.7 or later | SAML auth landed in v6.7 |
+| Instance type | t2.small.elastisearch / t3.small.elastisearch | (free tier eligible) |
+| Network configuration | Public access / VPC | [VPC Considerations](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-vpc.html#es-vpc-security) |
+| Prepare SAML authentication | 🤷‍♂️ | SAML can _only_ be configured after the cluster is running so this setting doesn't do much. |
+| Access policy | Open access, or IP restricted | We can strengthen this with IAM ARNs after SAML configuration | 
+
+
 Here's the [AWS ES SAML guide for Kibana](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/saml.html).
 
 All the fields are helpfully called different things in different places so you need to map these fields between AWS SSO, Elasticsearch & Kibana:
@@ -63,14 +75,12 @@ You also need to [Map attributes](https://docs.aws.amazon.com/singlesignon/lates
 |-|-|-|
 | Subject | ${user:subject} | unspecified |
 | roles | sso_user | basic |
-| name | ${user:preferredUsername} | basic |
-| email | ${user:email} | basic |
 
-Note: _roles_ is a (comma/semi-colon) delimited list of Kibana "backend roles", these are mapped inside Kibana to "roles" which give permissions. As of the time of writing, [there is a bug](https://github.com/opendistro-for-elasticsearch/security/pull/1024) which means only one role can be sent per record. 
 
-Also, I highly recommend you get the [_SAML tracer_ Chrome plugin](https://chrome.google.com/webstore/detail/saml-tracer/mpdajninpobndbfcldcmbpnnbhibjmch). It's super helpful when debugging.
+{% include alert.html text="Note: <em>roles</em> is a comma(?) delimited list of Kibana 'backend roles', these are mapped internally to 'roles' which apply permissions. As of the time of writing, <a href='https://github.com/opendistro-for-elasticsearch/security/pull/1024'>there is a bug</a> which means only one role can be sent per record. " %}
 
-## I need a bit more help, let's go step by step.
+
+## Step by step
 
 OK, no problem..
 
@@ -103,20 +113,32 @@ OK, no problem..
     </figure>
     </div>
 8. Under __Import IdP metadata__
+      ![]({{ site.baseurl }}/images/2021-03-11-ElasticSearch-Import-IdP-metadata.png "Elasticsearch >> Import IdP metadata")
    1. Upload the __AWS SSO SAML metadata file__
    2. __IdP entity ID__ should be populated automatically from the XML.
    3. __SAML master username / backend role__ (optional)
-         ![]({{ site.baseurl }}/images/2021-03-11-ElasticSearch-ClusterHealth-Error.png "Without an _IAM Role ARN_ in _SAML Master backend role_, the _Cluster Health_ and _Indices_ tabs won't load properly.")
       2. Use an IAM Role here to resolve access errors in the AWS console. 
          1. Goto [IAM Roles](https://console.aws.amazon.com/iam/home?region=us-east-2#/roles)
          2. Search SSO
          3. Use the __Role ARN__ in __SAML Master backend role__
             - e.g. arn:aws:iam::123456123456:role/aws-reserved/sso.amazonaws.com/us-east-2/AWSReservedSSO_AdministratorAccess
       3. Note that these fields simply update the _all_access_ and _security_manager_ __Role Mappings__ in Kibana. The details won't be reloaded next time you edit this page but can be found in Kibana under Security > Role Mappings. 
+         ![]({{ site.baseurl }}/images/2021-03-11-ElasticSearch-ClusterHealth-Error.png "Without an _IAM Role ARN_ in _SAML Master backend role_, the _Cluster Health_ and _Indices_ tabs won't load properly.")
 9.  Save
 10. Copy the __Kibana__ or __Custom Kibana__ endpoint from the Overview page ->  AWS SSO / Application start URL
+    <div style="display: flex;">
+    <figure class="image" style="flex: 1 1 100px; margin: 1em 10px;">
+      <img src="{{ site.baseurl }}/images/2021-03-11-ElasticSearch-Overview.png" style="margin-left: 0; max-height: 250px;" />
+      <figcaption>Elasticsearch >> Overiew >> _Kibana_ endpoint</figcaption>
+    </figure>
+    <figure class="image" style="flex: 1 1 100px; margin:1em 0;">
+      <img src="{{ site.baseurl }}/images/2021-03-11-SSO-ConfigureCustomApp6.png" style="margin-left: 0; max-height: 250px;" />
+      <figcaption>AWS SSO >> Application properties >> Application start URL</figcaption>
+    </figure>
+    </div>
 
-### AWS SSO - complete configuration
+
+### AWS SSO - Complete Configuration
 1. Back in AWS SSO, save _Configuration_
 2. Change to the _Attribute Mapping_ tab:
    1. Populate with the following values.
@@ -125,8 +147,6 @@ OK, no problem..
         |-|-|-|
         | Subject | ${user:subject} | unspecified |
         | roles | sso_user | basic |
-        | name | ${user:preferredUsername} | basic |
-        | email | ${user:email} | basic |
    2. Save changes.
 3. Change to the _Assigned Users_ tab
    1. Add an SSO group to grant access to a set of SSO users.
@@ -141,4 +161,4 @@ Done!
 
 ## Troubleshooting
 
-I highly recommend you get the [_SAML tracer_ Chrome plugin](https://chrome.google.com/webstore/detail/saml-tracer/mpdajninpobndbfcldcmbpnnbhibjmch). You can easily observe the SAML tokens being passed between AWS SSO & Kibana.
+{% include info.html text="I highly recommend you get the <a href='https://chrome.google.com/webstore/detail/saml-tracer/mpdajninpobndbfcldcmbpnnbhibjmch'><em>SAML tracer</em> Chrome plugin</a> so you can observe the SAML tokens being passed between AWS SSO & Kibana." %}
