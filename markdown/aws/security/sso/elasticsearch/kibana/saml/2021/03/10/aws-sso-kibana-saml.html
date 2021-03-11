@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>Using Elasticsearch Kibana with AWS SSO | Chris Miller</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Using Elasticsearch Kibana with AWS SSO" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="A guide to setting up AWS Elasticsearch Kibana to authenticate vis AWS SSO and SAML 2.0." />
+<meta property="og:description" content="A guide to setting up AWS Elasticsearch Kibana to authenticate vis AWS SSO and SAML 2.0." />
+<link rel="canonical" href="https://chrismiller.uk/markdown/aws/security/sso/elasticsearch/kibana/saml/2021/03/10/aws-sso-kibana-saml.html" />
+<meta property="og:url" content="https://chrismiller.uk/markdown/aws/security/sso/elasticsearch/kibana/saml/2021/03/10/aws-sso-kibana-saml.html" />
+<meta property="og:site_name" content="Chris Miller" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-03-10T00:00:00-06:00" />
+<script type="application/ld+json">
+{"url":"https://chrismiller.uk/markdown/aws/security/sso/elasticsearch/kibana/saml/2021/03/10/aws-sso-kibana-saml.html","@type":"BlogPosting","headline":"Using Elasticsearch Kibana with AWS SSO","dateModified":"2021-03-10T00:00:00-06:00","datePublished":"2021-03-10T00:00:00-06:00","mainEntityOfPage":{"@type":"WebPage","@id":"https://chrismiller.uk/markdown/aws/security/sso/elasticsearch/kibana/saml/2021/03/10/aws-sso-kibana-saml.html"},"description":"A guide to setting up AWS Elasticsearch Kibana to authenticate vis AWS SSO and SAML 2.0.","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://chrismiller.uk/feed.xml" title="Chris Miller" /><!-- the google measurement_id gets auto inserted from the config file -->
+
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-N2KJPNX2ZQ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-N2KJPNX2ZQ');
+</script>
+
+<link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Chris Miller</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Using Elasticsearch Kibana with AWS SSO</h1><p class="page-description">A guide to setting up AWS Elasticsearch Kibana to authenticate vis AWS SSO and SAML 2.0.</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-03-10T00:00:00-06:00" itemprop="datePublished">
+        Mar 10, 2021
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      5 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#markdown">markdown</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#aws">aws</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#security">security</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#sso">sso</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#elasticsearch">elasticsearch</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#kibana">kibana</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#saml">saml</a>
+        
+      
+      </p>
+    
+
+    </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul class="section-nav">
+<li class="toc-entry toc-h1"><a href="#securing-elasticsearch-kibana-with-aws-sso">Securing Elasticsearch Kibana with AWS SSO</a>
+<ul>
+<li class="toc-entry toc-h2"><a href="#surely-you-could-have-just-googled-this">Surely you could have just Googled this?</a></li>
+<li class="toc-entry toc-h2"><a href="#spare-me-the-story-whats-the-short-version">Spare me the story, what’s the short version?</a></li>
+<li class="toc-entry toc-h2"><a href="#i-need-a-bit-more-help-lets-go-step-by-step">I need a bit more help, let’s go step by step.</a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#aws-sso---create-saml-application">AWS SSO - Create SAML Application</a></li>
+<li class="toc-entry toc-h3"><a href="#elasticsearch---modify-authentication">Elasticsearch - Modify Authentication</a></li>
+<li class="toc-entry toc-h3"><a href="#aws-sso---complete-configuration">AWS SSO - complete configuration</a></li>
+<li class="toc-entry toc-h3"><a href="#elasticsearch---modify-access-policy-optional">Elasticsearch - Modify Access Policy (optional)</a></li>
+<li class="toc-entry toc-h3"><a href="#elasticsearch---vpc-optional">Elasticsearch - VPC (optional)</a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+</ul><h1 id="securing-elasticsearch-kibana-with-aws-sso">
+<a class="anchor" href="#securing-elasticsearch-kibana-with-aws-sso" aria-hidden="true"><span class="octicon octicon-link"></span></a>Securing Elasticsearch Kibana with AWS SSO</h1>
+
+<blockquote>
+  <p>“Trying to debug complex production issues without observability is like trying to cross a muddy field, blindfolded, at night.” - <em>anon</em></p>
+</blockquote>
+
+<p>I’ve been an avid user of observability tools since I discovered Splunk over a decade ago. The biggest downside to Splunk is the cost and I’ve been lucky enough to work in places where the benefits of a tool like Splunk outweight the massive licensing fees.</p>
+
+<p>Recently while exploring native AWS services, I found Cloudwatch Logs to be a bit lacking for my tastes so I’m hoping Elasticsearch can give me the observability drug I need without venturing too far outside the walls of AWS.</p>
+
+<p><a href="https://www.elastic.co/what-is/elk-stack">ELK stack</a> is a very popular log aggregation &amp; querying stack powered by open source software and while I’ve used it, and derivates such as Grafana, I’ve been consistently impressed at how much bang it provides for virtually no bucks at all. If you want to follow along, <a href="https://opendistro.github.io/for-elasticsearch/">Open Distro Elasticsearch</a> can be launched <a href="https://aws.amazon.com/elasticsearch-service/pricing/">within the AWS free tier</a> as long as you use a single node and choose t2.small.elasticsearch or t3.small.elasticsearch.</p>
+
+<p>I don’t want to manage separate passwords though so it needs to be fully integrated with <abbr title="Amazon Web Services - Single Sign-On">AWS SSO</abbr> Auth to be viable.</p>
+
+<h2 id="surely-you-could-have-just-googled-this">
+<a class="anchor" href="#surely-you-could-have-just-googled-this" aria-hidden="true"><span class="octicon octicon-link"></span></a>Surely you could have just Googled this?</h2>
+
+<p>Maybe, but my google fu has failed me so I’m documenting the steps and mappings for others.</p>
+
+<p>The <a href="https://aws.amazon.com/blogs/security/how-to-enable-secure-access-to-kibana-using-aws-single-sign-on/">official AWS Blog</a> suggests that you need to piggyback over AWS Cognito in order to achieve this. I’ve copied the main diagram below to save you a click:</p>
+
+<p><img src="/images/Secure-Access-to-Kibana-using-AWS-Single-Sign-On-Figure1.png" alt="" title="Diagram showing how Cognito can be used as a SAML bridge for Kibana and AWS SSO. Lifted from the AWS blog linked above."></p>
+
+<p>That blog post was written before the native SAML authentication was added to Kibana on the Amazon Elasticsearch Service (Oct 2020). So now that we have <a href="https://aws.amazon.com/about-aws/whats-new/2020/10/amazon-elasticsearch-service-adds-native-saml-authentication-kibana/">native SAML authentication for Kibana</a> we can integrate directly with AWS SSO and cut out the middle man. I also don’t need <abbr title="Active Directory">AD</abbr> integration so I’ll skip that although <abbr title="Your Milage May Vary">YMMV</abbr>.</p>
+
+<p><img src="/images/Secure-Access-to-Kibana-using-AWS-Single-Sign-On-Figure2.png" alt="" title="Modified diagram showing how Kibana and AWS SSO can integrate directly using SAML 2.0."></p>
+
+<p>I’ll update this page as I learn more. Here’s the current status:</p>
+<ul class="task-list">
+  <li class="task-list-item">
+<input type="checkbox" class="task-list-item-checkbox" disabled checked>Make it work</li>
+  <li class="task-list-item">
+<input type="checkbox" class="task-list-item-checkbox" disabled>Make it good</li>
+  <li class="task-list-item">
+<input type="checkbox" class="task-list-item-checkbox" disabled>Make it fast</li>
+</ul>
+
+<p>One limitation of this approach is that AWS SSO does not appear to support passing Groups to Custom SAML 2.0 applications at this time so while AWS SSO Groups can be used to grant/deny access to an application overall, further refinement of permissions must be handled inside Kibana based on username.</p>
+
+<h2 id="spare-me-the-story-whats-the-short-version">
+<a class="anchor" href="#spare-me-the-story-whats-the-short-version" aria-hidden="true"><span class="octicon octicon-link"></span></a>Spare me the story, what’s the short version?</h2>
+
+<p>It’s not one of the <a href="https://docs.aws.amazon.com/singlesignon/latest/userguide/saasapps.html#saasapps-supported">AWS SSO supported apps</a> so we have to go the long way round with a <a href="https://docs.aws.amazon.com/singlesignon/latest/userguide/samlapps.html">custom SAML app</a>.</p>
+
+<p>Here’s the <a href="https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/saml.html">AWS ES SAML guide for Kibana</a>.</p>
+
+<p>All the fields are helpfully called different things in different places so you need to map these fields between AWS SSO, Elasticsearch &amp; Kibana:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>AWS SSO App Configuration</th>
+      <th>Elasticsearch</th>
+      <th>typical format</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Application properties &gt; Application start URL</td>
+      <td>Overview &gt; Kibana / Custom Kibana</td>
+      <td>https://your.domain.here/_plugin/kibana/</td>
+    </tr>
+    <tr>
+      <td>Application metadata &gt; Application ACS URL</td>
+      <td>Modify Auth &gt; SP-initiated SSO URL</td>
+      <td>https://your.domain.here/_plugin/kibana/_opendistro/_security/saml/acs</td>
+    </tr>
+    <tr>
+      <td>Application metadata &gt; Application SAML audience</td>
+      <td>Modify Auth &gt; Service provider entity ID</td>
+      <td>https://your.domain.here</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr>
+      <th>Elasticsearch</th>
+      <th>AWS SSO</th>
+      <th>typical format</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Auth &gt; Import IdP metadata</td>
+      <td>Application Configuration &gt; SAML metadata file</td>
+      <td>An XML manifest file</td>
+    </tr>
+    <tr>
+      <td>Auth &gt; SAML master backend role (optional)</td>
+      <td>IAM Role ARN</td>
+      <td>arn:aws:iam::123456123456:role/aws-reserved/sso.amazonaws.com/us-east-2/AWSReservedSSO_AdministratorAccess</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>You also need to <a href="https://docs.aws.amazon.com/singlesignon/latest/userguide/mapawsssoattributestoapp.html">Map attributes</a> using the <a href="https://docs.aws.amazon.com/singlesignon/latest/userguide/attributemappingsconcept.html">supported mappings</a></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>User attribute in the app</th>
+      <th>Maps to this string value or user attribute in AWS SSO</th>
+      <th>Format</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Subject</td>
+      <td>${user:subject}</td>
+      <td>unspecified</td>
+    </tr>
+    <tr>
+      <td>roles</td>
+      <td>sso_user</td>
+      <td>basic</td>
+    </tr>
+    <tr>
+      <td>name</td>
+      <td>${user:preferredUsername}</td>
+      <td>basic</td>
+    </tr>
+    <tr>
+      <td>email</td>
+      <td>${user:email}</td>
+      <td>basic</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Note: <em>roles</em> is a (comma/semi-colon) delimited list of Kibana “backend roles”, these are mapped inside Kibana to “roles” which give permissions. As of the time of writing, <a href="https://github.com/opendistro-for-elasticsearch/security/pull/1024">there is a bug</a> which means only one role can be sent per record.</p>
+
+<p>Also, I highly recommend you get the <a href="https://chrome.google.com/webstore/detail/saml-tracer/mpdajninpobndbfcldcmbpnnbhibjmch"><em>SAML tracer</em> Chrome plugin</a>. It’s super helpful when debugging.</p>
+
+<h2 id="i-need-a-bit-more-help-lets-go-step-by-step">
+<a class="anchor" href="#i-need-a-bit-more-help-lets-go-step-by-step" aria-hidden="true"><span class="octicon octicon-link"></span></a>I need a bit more help, let’s go step by step.</h2>
+
+<p>OK, no problem..</p>
+
+<p><img src="/" alt=""></p>
+
+<h3 id="aws-sso---create-saml-application">
+<a class="anchor" href="#aws-sso---create-saml-application" aria-hidden="true"><span class="octicon octicon-link"></span></a>AWS SSO - Create SAML Application</h3>
+<ol>
+  <li>Go to AWS SSO and Create a new <strong>Custom SAML 2.0 Application</strong>
+<img src="/images/2021-03-11-SSO-AddNewApp.png" style="margin-left: 0; max-height: 150px">
+</li>
+  <li>Provide a <strong>Display Name</strong> and optional <strong>Description</strong>.
+<img src="/images/2021-03-11-SSO-ConfigureCustomApp2.png" style="margin-left: 0; max-height: 150px">
+</li>
+  <li>Download the <strong>AWS SSO SAML metadata file</strong>
+</li>
+</ol>
+
+<h3 id="elasticsearch---modify-authentication">
+<a class="anchor" href="#elasticsearch---modify-authentication" aria-hidden="true"><span class="octicon octicon-link"></span></a>Elasticsearch - Modify Authentication</h3>
+<ol>
+  <li>Go to the Elasticsearch domain in AWS Console.</li>
+  <li>Actions -&gt; Modify authentication
+   <img src="/images/2021-03-11-ElasticSearch-ModifyAuth.png" style="margin-left: 0; max-height: 250px">
+</li>
+  <li>Under <strong>SAML authentication for Kibana</strong>, click <strong>Enable SAML authentication</strong>
+</li>
+  <li>Under <strong>Configure your identity provider (IdP)</strong> copy the following values:
+    <ol>
+      <li>Service provider entity ID  -&gt;  AWS SSO / Application metadata / Application SAML audience</li>
+      <li>IdP-initiated SSO URL</li>
+      <li>SP-initiated SSO URL -&gt; AWS SSO / Application metadata / Application ACS URL</li>
+    </ol>
+    <div style="display: flex;">
+ <figure class="image" style="flex: 1 1 100px; margin: 1em 10px;">
+   <img src="/images/2021-03-11-ElasticSearch-SAMLAuth2.png" style="margin-left: 0; max-height: 250px;">
+   <figcaption>Elasticsearch &gt;&gt; Configure your identity provider (IdP)</figcaption>
+ </figure>
+ <figure class="image" style="flex: 1 1 100px; margin:1em 0;">
+   <img src="/images/2021-03-11-SSO-ConfigureCustomApp6.png" style="margin-left: 0; max-height: 250px;">
+   <figcaption>AWS SSO &gt;&gt; Application metadata</figcaption>
+ </figure>
+ </div>
+  </li>
+  <li>Under <strong>Import IdP metadata</strong>
+    <ol>
+      <li>Upload the <strong>AWS SSO SAML metadata file</strong>
+</li>
+      <li>
+<strong>IdP entity ID</strong> should be populated automatically from the XML.</li>
+      <li>
+<strong>SAML master username / backend role</strong> (optional)
+   <img src="/images/2021-03-11-ElasticSearch-ClusterHealth-Error.png" alt="" title="Without an _IAM Role ARN_ in _SAML Master backend role_, the _Cluster Health_ and _Indices_ tabs won't load properly.">
+        <ol>
+          <li>Use an IAM Role here to resolve access errors in the AWS console.
+            <ol>
+              <li>Goto <a href="https://console.aws.amazon.com/iam/home?region=us-east-2#/roles">IAM Roles</a>
+</li>
+              <li>Search SSO</li>
+              <li>Use the <strong>Role ARN</strong> in <strong>SAML Master backend role</strong>
+                <ul>
+                  <li>e.g. arn:aws:iam::123456123456:role/aws-reserved/sso.amazonaws.com/us-east-2/AWSReservedSSO_AdministratorAccess</li>
+                </ul>
+              </li>
+            </ol>
+          </li>
+          <li>Note that these fields simply update the <em>all_access</em> and <em>security_manager</em> <strong>Role Mappings</strong> in Kibana. The details won’t be reloaded next time you edit this page but can be found in Kibana under Security &gt; Role Mappings.</li>
+        </ol>
+      </li>
+    </ol>
+  </li>
+  <li>Save</li>
+  <li>Copy the <strong>Kibana</strong> or <strong>Custom Kibana</strong> endpoint from the Overview page -&gt;  AWS SSO / Application start URL</li>
+</ol>
+
+<h3 id="aws-sso---complete-configuration">
+<a class="anchor" href="#aws-sso---complete-configuration" aria-hidden="true"><span class="octicon octicon-link"></span></a>AWS SSO - complete configuration</h3>
+<ol>
+  <li>Back in AWS SSO, save <em>Configuration</em>
+</li>
+  <li>Change to the <em>Attribute Mapping</em> tab:
+    <ol>
+      <li>
+        <p>Populate with the following values.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>User attribute in the app</th>
+              <th>Maps to this string value or user attribute in AWS SSO</th>
+              <th>Format</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Subject</td>
+              <td>${user:subject}</td>
+              <td>unspecified</td>
+            </tr>
+            <tr>
+              <td>roles</td>
+              <td>sso_user</td>
+              <td>basic</td>
+            </tr>
+            <tr>
+              <td>name</td>
+              <td>${user:preferredUsername}</td>
+              <td>basic</td>
+            </tr>
+            <tr>
+              <td>email</td>
+              <td>${user:email}</td>
+              <td>basic</td>
+            </tr>
+          </tbody>
+        </table>
+      </li>
+      <li>
+        <p>Save changes.</p>
+      </li>
+    </ol>
+  </li>
+  <li>Change to the <em>Assigned Users</em> tab
+    <ol>
+      <li>Add an SSO group to grant access to a set of SSO users.</li>
+      <li>Save changes.</li>
+    </ol>
+  </li>
+</ol>
+
+<h3 id="elasticsearch---modify-access-policy-optional">
+<a class="anchor" href="#elasticsearch---modify-access-policy-optional" aria-hidden="true"><span class="octicon octicon-link"></span></a>Elasticsearch - Modify Access Policy (optional)</h3>
+
+<h3 id="elasticsearch---vpc-optional">
+<a class="anchor" href="#elasticsearch---vpc-optional" aria-hidden="true"><span class="octicon octicon-link"></span></a>Elasticsearch - VPC (optional)</h3>
+
+<p>Done!</p>
+
+<h2 id="troubleshooting">
+<a class="anchor" href="#troubleshooting" aria-hidden="true"><span class="octicon octicon-link"></span></a>Troubleshooting</h2>
+
+<p>I highly recommend you get the <a href="https://chrome.google.com/webstore/detail/saml-tracer/mpdajninpobndbfcldcmbpnnbhibjmch"><em>SAML tracer</em> Chrome plugin</a>. You can easily observe the SAML tokens being passed between AWS SSO &amp; Kibana.</p>
+
+  </div><a class="u-url" href="/markdown/aws/security/sso/elasticsearch/kibana/saml/2021/03/10/aws-sso-kibana-saml.html" hidden></a>
+</article>
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>A little corner of the Internet for my experiements</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/chrismilleruk" title="chrismilleruk"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://twitter.com/chrismilleruk" title="chrismilleruk"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
