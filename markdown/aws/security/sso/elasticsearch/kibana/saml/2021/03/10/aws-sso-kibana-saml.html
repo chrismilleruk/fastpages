@@ -129,11 +129,11 @@ window.onload = wrap_img;
 <ul>
 <li class="toc-entry toc-h2"><a href="#surely-you-could-have-just-googled-this">Surely you could have just Googled this?</a></li>
 <li class="toc-entry toc-h2"><a href="#spare-me-the-story-whats-the-short-version">Spare me the story, what’s the short version?</a></li>
-<li class="toc-entry toc-h2"><a href="#i-need-a-bit-more-help-lets-go-step-by-step">I need a bit more help, let’s go step by step.</a>
+<li class="toc-entry toc-h2"><a href="#step-by-step">Step by step</a>
 <ul>
 <li class="toc-entry toc-h3"><a href="#aws-sso---create-saml-application">AWS SSO - Create SAML Application</a></li>
 <li class="toc-entry toc-h3"><a href="#elasticsearch---modify-authentication">Elasticsearch - Modify Authentication</a></li>
-<li class="toc-entry toc-h3"><a href="#aws-sso---complete-configuration">AWS SSO - complete configuration</a></li>
+<li class="toc-entry toc-h3"><a href="#aws-sso---complete-configuration">AWS SSO - Complete Configuration</a></li>
 <li class="toc-entry toc-h3"><a href="#elasticsearch---modify-access-policy-optional">Elasticsearch - Modify Access Policy (optional)</a></li>
 <li class="toc-entry toc-h3"><a href="#elasticsearch---vpc-optional">Elasticsearch - VPC (optional)</a></li>
 </ul>
@@ -185,6 +185,50 @@ window.onload = wrap_img;
 <a class="anchor" href="#spare-me-the-story-whats-the-short-version" aria-hidden="true"><span class="octicon octicon-link"></span></a>Spare me the story, what’s the short version?</h2>
 
 <p>It’s not one of the <a href="https://docs.aws.amazon.com/singlesignon/latest/userguide/saasapps.html#saasapps-supported">AWS SSO supported apps</a> so we have to go the long way round with a <a href="https://docs.aws.amazon.com/singlesignon/latest/userguide/samlapps.html">custom SAML app</a>.</p>
+
+<p>Launch settings for Elasticsearch:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Setting name</th>
+      <th>value</th>
+      <th>info</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Deployment type</td>
+      <td>Dev &amp; Test</td>
+      <td>(free tier eligible)</td>
+    </tr>
+    <tr>
+      <td>Version</td>
+      <td>6.7 or later</td>
+      <td>SAML auth landed in v6.7</td>
+    </tr>
+    <tr>
+      <td>Instance type</td>
+      <td>t2.small.elastisearch / t3.small.elastisearch</td>
+      <td>(free tier eligible)</td>
+    </tr>
+    <tr>
+      <td>Network configuration</td>
+      <td>Public access / VPC</td>
+      <td><a href="https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-vpc.html#es-vpc-security">VPC Considerations</a></td>
+    </tr>
+    <tr>
+      <td>Prepare SAML authentication</td>
+      <td>🤷‍♂️</td>
+      <td>SAML can <em>only</em> be configured after the cluster is running so this setting doesn’t do much.</td>
+    </tr>
+    <tr>
+      <td>Access policy</td>
+      <td>Open access, or IP restricted</td>
+      <td>We can strengthen this with IAM ARNs after SAML configuration</td>
+    </tr>
+  </tbody>
+</table>
 
 <p>Here’s the <a href="https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/saml.html">AWS ES SAML guide for Kibana</a>.</p>
 
@@ -260,25 +304,16 @@ window.onload = wrap_img;
       <td>sso_user</td>
       <td>basic</td>
     </tr>
-    <tr>
-      <td>name</td>
-      <td>${user:preferredUsername}</td>
-      <td>basic</td>
-    </tr>
-    <tr>
-      <td>email</td>
-      <td>${user:email}</td>
-      <td>basic</td>
-    </tr>
   </tbody>
 </table>
 
-<p>Note: <em>roles</em> is a (comma/semi-colon) delimited list of Kibana “backend roles”, these are mapped inside Kibana to “roles” which give permissions. As of the time of writing, <a href="https://github.com/opendistro-for-elasticsearch/security/pull/1024">there is a bug</a> which means only one role can be sent per record.</p>
+<div class="Toast Toast--warning googoo">
+   <span class="Toast-icon"><svg class="octicon octicon-alert octicon octicon-alert" viewbox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M8.22 1.754a.25.25 0 00-.44 0L1.698 13.132a.25.25 0 00.22.368h12.164a.25.25 0 00.22-.368L8.22 1.754zm-1.763-.707c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0114.082 15H1.918a1.75 1.75 0 01-1.543-2.575L6.457 1.047zM9 11a1 1 0 11-2 0 1 1 0 012 0zm-.25-5.25a.75.75 0 00-1.5 0v2.5a.75.75 0 001.5 0v-2.5z"></path></svg></span>
+   <span class="Toast-content">Note: <em>roles</em> is a comma(?) delimited list of Kibana 'backend roles', these are mapped internally to 'roles' which apply permissions. As of the time of writing, <a href="https://github.com/opendistro-for-elasticsearch/security/pull/1024">there is a bug</a> which means only one role can be sent per record. </span>
+</div>
 
-<p>Also, I highly recommend you get the <a href="https://chrome.google.com/webstore/detail/saml-tracer/mpdajninpobndbfcldcmbpnnbhibjmch"><em>SAML tracer</em> Chrome plugin</a>. It’s super helpful when debugging.</p>
-
-<h2 id="i-need-a-bit-more-help-lets-go-step-by-step">
-<a class="anchor" href="#i-need-a-bit-more-help-lets-go-step-by-step" aria-hidden="true"><span class="octicon octicon-link"></span></a>I need a bit more help, let’s go step by step.</h2>
+<h2 id="step-by-step">
+<a class="anchor" href="#step-by-step" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step by step</h2>
 
 <p>OK, no problem..</p>
 
@@ -355,7 +390,7 @@ window.onload = wrap_img;
 </ol>
 
 <h3 id="aws-sso---complete-configuration">
-<a class="anchor" href="#aws-sso---complete-configuration" aria-hidden="true"><span class="octicon octicon-link"></span></a>AWS SSO - complete configuration</h3>
+<a class="anchor" href="#aws-sso---complete-configuration" aria-hidden="true"><span class="octicon octicon-link"></span></a>AWS SSO - Complete Configuration</h3>
 <ol>
   <li>Back in AWS SSO, save <em>Configuration</em>
 </li>
@@ -381,16 +416,6 @@ window.onload = wrap_img;
             <tr>
               <td>roles</td>
               <td>sso_user</td>
-              <td>basic</td>
-            </tr>
-            <tr>
-              <td>name</td>
-              <td>${user:preferredUsername}</td>
-              <td>basic</td>
-            </tr>
-            <tr>
-              <td>email</td>
-              <td>${user:email}</td>
               <td>basic</td>
             </tr>
           </tbody>
@@ -420,7 +445,11 @@ window.onload = wrap_img;
 <h2 id="troubleshooting">
 <a class="anchor" href="#troubleshooting" aria-hidden="true"><span class="octicon octicon-link"></span></a>Troubleshooting</h2>
 
-<p>I highly recommend you get the <a href="https://chrome.google.com/webstore/detail/saml-tracer/mpdajninpobndbfcldcmbpnnbhibjmch"><em>SAML tracer</em> Chrome plugin</a>. You can easily observe the SAML tokens being passed between AWS SSO &amp; Kibana.</p>
+<div class="Toast">
+   <span class="Toast-icon"><svg class="octicon octicon-info octicon octicon-info" viewbox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8zm6.5-.25A.75.75 0 017.25 7h1a.75.75 0 01.75.75v2.75h.25a.75.75 0 010 1.5h-2a.75.75 0 010-1.5h.25v-2h-.25a.75.75 0 01-.75-.75zM8 6a1 1 0 100-2 1 1 0 000 2z"></path></svg></span>
+   <span class="Toast-content">I highly recommend you get the <a href="https://chrome.google.com/webstore/detail/saml-tracer/mpdajninpobndbfcldcmbpnnbhibjmch"><em>SAML tracer</em> Chrome plugin</a> so you can observe the SAML tokens being passed between AWS SSO &amp; Kibana.</span>
+</div>
+
 
   </div><a class="u-url" href="/markdown/aws/security/sso/elasticsearch/kibana/saml/2021/03/10/aws-sso-kibana-saml.html" hidden></a>
 </article>
