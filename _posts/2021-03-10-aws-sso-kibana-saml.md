@@ -4,6 +4,7 @@ layout: post
 description: A guide to setting up AWS Elasticsearch Kibana to authenticate vis AWS SSO and SAML 2.0.
 categories: [markdown, aws, security, sso, elasticsearch, kibana, saml]
 title: Using Elasticsearch Kibana with AWS SSO
+image: images/Secure-Access-to-Kibana-using-AWS-Single-Sign-On-Figure2.png
 ---
 # Securing Elasticsearch Kibana with AWS SSO
 
