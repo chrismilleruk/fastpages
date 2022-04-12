@@ -20,7 +20,7 @@ group :jekyll_plugins do
   gem "jekyll-twitter-plugin"
   gem 'jekyll-relative-links'
   gem 'jekyll-seo-tag'
-  gem 'jekyll-toc', '>= 0.14.0'
+  gem 'jekyll-toc', '>= 0.17.1'
   gem 'jekyll-gist'
   gem 'jekyll-paginate'
   gem 'jekyll-sitemap'
